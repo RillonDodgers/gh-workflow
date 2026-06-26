@@ -1,7 +1,7 @@
 {
   "name": "gh-workflow",
   "interface": {
-    "displayName": "Gh Workflow"
+    "displayName": "GH Workflow"
   },
   "plugins": [
     {
