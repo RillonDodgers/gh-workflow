@@ -10,6 +10,10 @@ Use this skill to run the user's preferred GitHub workflow with `gh`, Git, issue
 ## Global Rules
 
 - Treat `main` as the only head/base branch.
+- Protect `main` during repo initialization when GitHub admin access allows it.
+- When this skill is active and repo has `origin`, do not edit tracked files on `main`.
+- Before any non-trivial repo change, create or reuse issue, then create branch from `main`.
+- Exception: read-only inspection on `main` is allowed.
 - Do not set up, use, or recommend GitHub wiki.
 - Do not set up, use, or recommend Dependabot workflows.
 - Always make local `main` current with `origin/main` before creating a work branch.
@@ -50,9 +54,16 @@ Use this when initializing or auditing a repo for the user's preferred GitHub pr
    - Ask only for missing repo creation details that `gh` needs, such as owner.
 3. Ensure the repo uses `main` as the default branch or report the exact command/manual action needed to change it.
 4. Verify local `main` tracks `origin/main` when a remote exists.
-5. Disable wiki through `gh` if supported for the repo and auth scope; otherwise report the manual GitHub settings path.
-6. Do not add Dependabot files or workflows. If existing Dependabot config is present, report it and ask before removing it.
-7. Confirm PR merge settings where possible. Prefer squash merge only and branch deletion after merge; report UI-only settings when `gh` cannot change them.
+5. Apply branch protection to `main` as part of initialization when repo admin access allows it. Minimum rule set:
+   - require pull request before merge
+   - require 1 approving review
+   - dismiss stale approvals on new pushes
+   - require conversation resolution before merge
+   - disallow force pushes
+   - disallow branch deletion
+6. Disable wiki through `gh` if supported for the repo and auth scope; otherwise report the manual GitHub settings path.
+7. Do not add Dependabot files or workflows. If existing Dependabot config is present, report it and ask before removing it.
+8. Confirm PR merge settings where possible. Prefer squash merge only and branch deletion after merge; report UI-only settings when `gh` cannot change them.
 
 Default no-upstream create flow:
 
@@ -61,6 +72,32 @@ repo_name=$(basename "$PWD")
 git branch -M main
 gh repo create "$repo_name" --private --source=. --remote=origin --push
 ```
+
+Then protect `main`:
+
+```bash
+repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+gh api --method PUT "repos/$repo/branches/main/protection" --input - <<'JSON'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": false,
+    "required_approving_review_count": 1
+  },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "block_creations": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false
+}
+JSON
+```
+
+For existing repos, same protection call applies after `origin/main` exists.
 
 If `gh repo create` prompts for owner and the user did not specify one, ask the user instead of guessing. Do not prompt for visibility unless the user asks; private is the default.
 
@@ -104,7 +141,8 @@ Use `--body-file` for markdown bodies to avoid shell quoting bugs.
 Use this when the user wants the full issue-first work loop: issue, branch, implementation, verification, commit, push, and PR.
 
 1. Inspect status and local instructions.
-2. Update `main` before branching:
+2. Do not begin tracked-file edits until issue exists and branch has been created.
+3. Update `main` before branching:
 
 ```bash
 git fetch origin
@@ -112,23 +150,23 @@ git switch main
 git pull --ff-only origin main
 ```
 
-3. Use the supplied issue, or run `/gh-workflow:create-issue`.
-4. Create the branch from current `main`:
+4. Use the supplied issue, or run `/gh-workflow:create-issue`.
+5. Create the branch from current `main`:
 
 ```bash
 git switch -c <type>/<issue-number>
 ```
 
-5. Do the requested work.
-6. Run the smallest verification that proves the change.
-7. Stage intended files only after reviewing `git status --short`.
-8. Commit with one-line Conventional Commit style:
+6. Do the requested work.
+7. Run the smallest verification that proves the change.
+8. Stage intended files only after reviewing `git status --short`.
+9. Commit with one-line Conventional Commit style:
 
 ```bash
 git commit -m "<type>: <summary>"
 ```
 
-9. Push and create a PR:
+10. Push and create a PR:
 
 ```bash
 git push -u origin HEAD
@@ -191,7 +229,9 @@ git pull --ff-only origin main
 ## Failure Handling
 
 - If `gh` lacks auth or scope, report the exact failing command and the minimal `gh auth refresh` or login command.
+- If branch protection cannot be applied through `gh`, report exact failing command plus manual GitHub path: `Settings` -> `Branches` -> `Add branch protection rule`, branch name pattern `main`.
 - If GitHub settings are UI-only for current auth, report the manual setting name and desired value.
+- If current branch is `main` and task requires tracked-file edits, stop and create or reuse issue before branching.
 - If a dirty worktree blocks branch switching, stop and explain which files are blocking.
 - If remote/network calls fail, retry once before treating remote state as unavailable.
 - If PR merge succeeds but metadata refresh fails, trust the merge command result first and retry metadata only if needed.
