@@ -1,0 +1,4 @@
+interface:
+  display_name: "GH Workflow"
+  short_description: "Issue-first GitHub flow with gh"
+  default_prompt: "Use $gh-workflow to run an issue-first GitHub workflow for this repo."
