@@ -24,6 +24,8 @@ It is meant for repos where work should follow this loop:
 The skill is built around a few repo rules:
 
 - `main` is only base branch
+- protect `main` during repo init when GitHub admin access allows it
+- no tracked-file edits on `main`; create or reuse issue, then branch first
 - prefer `gh` for GitHub actions
 - update local `main` from `origin/main` before branching
 - create issue before work when needed
@@ -45,6 +47,7 @@ This repo already includes local marketplace metadata for development and testin
 Example prompts:
 
 - `Use $gh-workflow to initialize this repo.`
+- `Use $gh-workflow to initialize this repo and protect main.`
 - `Use $gh-workflow to create an issue and branch.`
 - `Use $gh-workflow to stage, push, review, and merge.`
 
@@ -79,6 +82,10 @@ When changing workflow behavior, update both:
 
 - plugin skill at `plugins/gh-workflow/skills/gh-workflow/SKILL.md`
 - top-level `README.md` if user-facing behavior changes
+
+Repo init now includes branch protection on `main` when `gh` auth can administer repo. Fallback: report exact failing command plus manual GitHub path under branch settings.
+
+When `gh-workflow` is active in repo with `origin`, tracked-file edits must wait until issue exists and work branch has been created. Read-only inspection on `main` is still allowed.
 
 ## License
 
