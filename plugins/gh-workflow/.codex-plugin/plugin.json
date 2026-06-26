@@ -1,0 +1,36 @@
+{
+  "name": "gh-workflow",
+  "version": "0.1.0",
+  "description": "Issue-first GitHub workflow skill for Codex.",
+  "author": {
+    "name": "RillonDodgers",
+    "url": "https://github.com/RillonDodgers"
+  },
+  "homepage": "https://github.com/RillonDodgers/gh-workflow",
+  "repository": "https://github.com/RillonDodgers/gh-workflow",
+  "license": "MIT",
+  "keywords": [
+    "github",
+    "gh",
+    "git",
+    "workflow",
+    "skills"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "GH Workflow",
+    "shortDescription": "Issue-first GitHub workflow with gh.",
+    "longDescription": "GH Workflow adds an issue-first GitHub workflow for initializing repositories, creating issues, branching, committing, pushing, reviewing, squash merging, and deleting merged branches with the gh CLI.",
+    "developerName": "RillonDodgers",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Write"
+    ],
+    "websiteURL": "https://github.com/RillonDodgers/gh-workflow",
+    "defaultPrompt": [
+      "Use $gh-workflow to initialize this repo.",
+      "Use $gh-workflow to create an issue and branch.",
+      "Use $gh-workflow to stage, push, review, and merge."
+    ]
+  }
+}
